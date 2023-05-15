@@ -27,6 +27,7 @@ internal class MainActivity : AppCompatActivity() {
     private var player: MediaPlayer? = null
     private var file: File? = null
     private var outputFormat = MediaRecorder.OutputFormat.DEFAULT
+    private var audioEncoder = MediaRecorder.AudioEncoder.DEFAULT
 
     private enum class OutputFormat {
         DEFAULT,
@@ -44,6 +45,17 @@ internal class MainActivity : AppCompatActivity() {
 //        OGG,
     }
 
+    private enum class AudioEncoder {
+        DEFAULT,
+        AMR_NB,
+        AMR_WB,
+        AAC,
+        HE_AAC,
+        AAC_ELD,
+        VORBIS,
+//        OPUS,
+    }
+
     private fun startRecord() {
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 1)
@@ -51,7 +63,6 @@ internal class MainActivity : AppCompatActivity() {
         }
         if (recorder != null) TODO()
         val audioSource = MediaRecorder.AudioSource.MIC
-        val audioEncoder = MediaRecorder.AudioEncoder.DEFAULT
         val outputFile = checkNotNull(file)
         outputFile.delete()
         checkNotNull(recordButton).also {
@@ -86,9 +97,15 @@ internal class MainActivity : AppCompatActivity() {
 
     private fun playAudio() {
         val file = file ?: return
-        if (!file.exists()) return
-        if (!file.isFile) return
-        if (file.length() == 0L) return
+        if (!file.exists()) {
+            showToast("File does not exist!")
+            return
+        }
+        if (!file.isFile) TODO()
+        if (file.length() == 0L) {
+            showToast("File is empty!")
+            return
+        }
         if (player != null) TODO()
         checkNotNull(playButton).also {
             it.text = "stop audio"
@@ -161,6 +178,34 @@ internal class MainActivity : AppCompatActivity() {
                         OutputFormat.WEBM -> MediaRecorder.OutputFormat.WEBM
 //                        OutputFormat.HEIF -> MediaRecorder.OutputFormat.HEIF
 //                        OutputFormat.OGG -> MediaRecorder.OutputFormat.OGG
+                    }
+                }
+                rows.addView(it)
+            }
+            TextView(context).also {
+                it.text = "Audio encoder:"
+                rows.addView(it)
+            }
+            Spinner(context).also {
+                it.layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    128,
+                )
+                val values = AudioEncoder.values().map { format -> format.name }
+                it.adapter = SpinnerAdapterGeneric(
+                    context = context,
+                    values = values
+                )
+                it.setOnItemSelectedListener { position ->
+                    audioEncoder = when (AudioEncoder.valueOf(values[position])) {
+                        AudioEncoder.DEFAULT -> MediaRecorder.AudioEncoder.DEFAULT
+                        AudioEncoder.AMR_NB -> MediaRecorder.AudioEncoder.AMR_NB
+                        AudioEncoder.AMR_WB -> MediaRecorder.AudioEncoder.AMR_WB
+                        AudioEncoder.AAC -> MediaRecorder.AudioEncoder.AAC
+                        AudioEncoder.HE_AAC -> MediaRecorder.AudioEncoder.HE_AAC
+                        AudioEncoder.AAC_ELD -> MediaRecorder.AudioEncoder.AAC_ELD
+                        AudioEncoder.VORBIS -> MediaRecorder.AudioEncoder.VORBIS
+//                        AudioEncoder.OPUS -> MediaRecorder.AudioEncoder.OPUS
                     }
                 }
                 rows.addView(it)
