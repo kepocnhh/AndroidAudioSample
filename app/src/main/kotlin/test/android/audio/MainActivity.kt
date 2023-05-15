@@ -3,6 +3,7 @@ package test.android.audio
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.os.Bundle
 import android.view.Gravity
@@ -18,7 +19,8 @@ internal class MainActivity : AppCompatActivity() {
     private var recordButton: TextView? = null
     private var playButton: TextView? = null
     private var recorder: MediaRecorder? = null
-    private var outputFile: File? = null
+    private var player: MediaPlayer? = null
+    private var file: File? = null
 
     private fun startRecord() {
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
@@ -29,7 +31,7 @@ internal class MainActivity : AppCompatActivity() {
         val audioSource = MediaRecorder.AudioSource.MIC
         val outputFormat = MediaRecorder.OutputFormat.DEFAULT
         val audioEncoder = MediaRecorder.AudioEncoder.DEFAULT
-        val outputFile = checkNotNull(outputFile)
+        val outputFile = checkNotNull(file)
         outputFile.delete()
         checkNotNull(recordButton).also {
             it.text = "stop record"
@@ -61,18 +63,46 @@ internal class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun playRecord() {
-        val outputFile = outputFile ?: return
-        if (!outputFile.exists()) return
-        if (!outputFile.isFile) return
-        if (outputFile.length() == 0L) return
-        TODO()
+    private fun playAudio() {
+        val file = file ?: return
+        if (!file.exists()) return
+        if (!file.isFile) return
+        if (file.length() == 0L) return
+        if (player != null) TODO()
+        checkNotNull(playButton).also {
+            it.text = "stop audio"
+            it.setOnClickListener {
+                stopAudio()
+            }
+        }
+        player = MediaPlayer().also {
+            it.setDataSource(file.absolutePath)
+            it.setOnCompletionListener {
+                stopAudio()
+            }
+            it.prepare()
+            it.start()
+        }
+    }
+
+    private fun stopAudio() {
+        checkNotNull(playButton).also {
+            it.text = "play audio"
+            it.setOnClickListener {
+                playAudio()
+            }
+        }
+        checkNotNull(player).also {
+            it.stop()
+            it.release()
+        }
+        player = null
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val context: Context = this
-        outputFile = cacheDir.resolve("foo")
+        file = cacheDir.resolve("foo")
         val root = FrameLayout(context)
         LinearLayout(context).also { rows ->
             rows.layoutParams = FrameLayout.LayoutParams(
@@ -98,9 +128,9 @@ internal class MainActivity : AppCompatActivity() {
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                 )
-                it.text = "play"
+                it.text = "play audio"
                 it.setOnClickListener {
-                    playRecord()
+                    playAudio()
                 }
                 playButton = it
                 rows.addView(it)
