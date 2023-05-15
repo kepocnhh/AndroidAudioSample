@@ -7,10 +7,15 @@ import android.media.MediaPlayer
 import android.media.MediaRecorder
 import android.os.Bundle
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.Spinner
+import android.widget.SpinnerAdapter
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import java.io.File
@@ -21,6 +26,23 @@ internal class MainActivity : AppCompatActivity() {
     private var recorder: MediaRecorder? = null
     private var player: MediaPlayer? = null
     private var file: File? = null
+    private var outputFormat = MediaRecorder.OutputFormat.DEFAULT
+
+    private enum class OutputFormat {
+        DEFAULT,
+        THREE_GPP,
+        MPEG_4,
+        RAW_AMR,
+        AMR_NB,
+        AMR_WB,
+//        AAC_ADIF,
+        AAC_ADTS,
+//        OUTPUT_FORMAT_RTP_AVP,
+//        MPEG_2_TS,
+        WEBM,
+//        HEIF,
+//        OGG,
+    }
 
     private fun startRecord() {
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
@@ -29,7 +51,6 @@ internal class MainActivity : AppCompatActivity() {
         }
         if (recorder != null) TODO()
         val audioSource = MediaRecorder.AudioSource.MIC
-        val outputFormat = MediaRecorder.OutputFormat.DEFAULT
         val audioEncoder = MediaRecorder.AudioEncoder.DEFAULT
         val outputFile = checkNotNull(file)
         outputFile.delete()
@@ -111,6 +132,39 @@ internal class MainActivity : AppCompatActivity() {
                 Gravity.CENTER_VERTICAL
             )
             rows.orientation = LinearLayout.VERTICAL
+            TextView(context).also {
+                it.text = "Output format:"
+                rows.addView(it)
+            }
+            Spinner(context).also {
+                it.layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    128,
+                )
+                val values = OutputFormat.values().map { format -> format.name }
+                it.adapter = SpinnerAdapterGeneric(
+                    context = context,
+                    values = values
+                )
+                it.setOnItemSelectedListener { position ->
+                    outputFormat = when (OutputFormat.valueOf(values[position])) {
+                        OutputFormat.DEFAULT -> MediaRecorder.OutputFormat.DEFAULT
+                        OutputFormat.THREE_GPP -> MediaRecorder.OutputFormat.THREE_GPP
+                        OutputFormat.MPEG_4 -> MediaRecorder.OutputFormat.MPEG_4
+                        OutputFormat.RAW_AMR -> MediaRecorder.OutputFormat.RAW_AMR
+                        OutputFormat.AMR_NB -> MediaRecorder.OutputFormat.AMR_NB
+                        OutputFormat.AMR_WB -> MediaRecorder.OutputFormat.AMR_WB
+//                        OutputFormat.AAC_ADIF -> MediaRecorder.OutputFormat.AAC_ADIF
+                        OutputFormat.AAC_ADTS -> MediaRecorder.OutputFormat.AAC_ADTS
+//                        OutputFormat.OUTPUT_FORMAT_RTP_AVP -> MediaRecorder.OutputFormat.OUTPUT_FORMAT_RTP_AVP
+//                        OutputFormat.MPEG_2_TS -> MediaRecorder.OutputFormat.MPEG_2_TS
+                        OutputFormat.WEBM -> MediaRecorder.OutputFormat.WEBM
+//                        OutputFormat.HEIF -> MediaRecorder.OutputFormat.HEIF
+//                        OutputFormat.OGG -> MediaRecorder.OutputFormat.OGG
+                    }
+                }
+                rows.addView(it)
+            }
             Button(context).also {
                 it.layoutParams = LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
